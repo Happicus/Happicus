@@ -1,9 +1,7 @@
 - 👋 Hi, I’m @Happicus
 - 👀 I’m interested in 3D printing and modeling
 - 🌱 I’m currently learning Python
-- 💞️ I’m looking to collaborate on ...
-- 📫 How to reach me ...
-- ⚡ Fun fact: I like monkeys and sloths
+- ⚡ Fun fact: I like monkeys, sloths and Stardew valley
 
 <!---
 Happicus/Happicus is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
