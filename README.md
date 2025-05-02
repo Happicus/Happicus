@@ -1,5 +1,5 @@
 - 👋 Hi, I’m @Happicus
-- 👀 I’m interested in 3D printing & modeling, aerospace and anything tinkering/engineering related
+- 👀 I’m interested in 3D printing & modeling, aerospace & anything tinkering/engineering related
 - 🌱 I’m currently learning Python
 - ⚡ Fun fact: I like monkeys, sloths, Stardew valley & Kerbal Space Program
 
