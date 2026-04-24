@@ -2,7 +2,7 @@
 -------------------------------------
 - 🥔 I like Bread, D&D, Video Games, Monke, Tinkering/Engineering and Aerospace 
 - 🌱 I’m currently learning as much as I can, especially Stuff about Aerospace
-- ⚡ Fun fact: I've crossed a boarder via a Fire Road/Mountian Trail
+- ⚡ Fun fact: I've crossed a border via a Fire Road/Mountain Trail
 
 <!---
 Happicus/Happicus is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
