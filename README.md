@@ -2,7 +2,7 @@
 -------------------------------------
 - 🥔 I like Bread, D&D, Video Games, Monke, Tinkering/Engineering and Aerospace 
 - 🌱 I’m currently learning as much as I can, especially Stuff about Aerospace
-- 🕹️ **Projects:** [Play my Online Yahtzee & Qwixx Game](https://happicus.github.io/Happicus/dice_games.html)
+- 🕹️ **Projects:** [Play my Online Yahtzee & Qwixx Game](https://happicus.github.io/Happicus/dice_games.html). Or try my completely untested [Party-Mode](https://happicus.github.io/Happicus/dice_games_party.html) version
 - ⚡ Fun fact: I've crossed a border via a Fire Road/Mountain Trail
 
 <!---
