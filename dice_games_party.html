@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -208,7 +209,7 @@
 </head>
 <body>
 
-<div id="your-turn-banner">🎲 IT'S YOUR TURN! 🎲</div>
+<div id="your-turn-banner">軸 IT'S YOUR TURN! 軸</div>
 
 <div class="container">
     <header>
@@ -558,12 +559,14 @@
         if (!isHost || !isOnline || netState.state !== 'PLAYING') return;
 
         let elapsed = Date.now() - netState.phaseStart;
+        let actionTaken = false;
 
         if (netState.turnPhase === 'WAIT_ROLL') {
             netState.timeTotal = 10000;
             netState.timeLeft = netState.timeTotal - elapsed;
             if (netState.timeLeft <= 0) {
                 hostExecuteRoll();
+                actionTaken = true;
             }
         } else if (netState.turnPhase === 'ACTION') {
             if (netState.timerSetting > 0) {
@@ -571,6 +574,7 @@
                 netState.timeLeft = netState.timeTotal - elapsed;
                 if (netState.timeLeft <= 0) {
                     hostExecuteBotScore();
+                    actionTaken = true;
                 }
             } else {
                 netState.timeLeft = -1; // Infinite
@@ -579,6 +583,9 @@
         
         lastSyncTime = Date.now(); // Host anchors its own clock
         broadcastState();
+        if (actionTaken) {
+            renderAll();
+        }
     }
 
     function hostAdvanceTurn() {
@@ -688,25 +695,30 @@
         if (msg.cmd === 'Y_ROLL' && isSenderActive && netState.yRollsLeft > 0 && netState.tab === 'yahtzee') {
             hostExecuteRoll();
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Y_HOLD' && isSenderActive && netState.turnPhase === 'ACTION') {
             netState.yDice[msg.idx].h = !netState.yDice[msg.idx].h;
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Y_PRESELECT' && isSenderActive && netState.turnPhase === 'ACTION') {
             if (!netState.ySelected) netState.ySelected = {};
             netState.ySelected[msg.pId] = msg.cat;
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Y_SCORE' && isSenderActive && netState.turnPhase === 'ACTION') {
             netState.ySheets[msg.pId][msg.cat] = calcPotential(msg.cat, netState.yDice);
             if (netState.ySelected) netState.ySelected[msg.pId] = null;
             hostAdvanceTurn();
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Q_ROLL' && isSenderActive && netState.turnPhase === 'WAIT_ROLL') {
             hostExecuteRoll();
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Q_TOGGLE') {
             // Anyone can toggle Qwixx any time!
@@ -719,15 +731,18 @@
                 sheet[msg.color][11] = false;
             }
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Q_PENALTY') {
             let sheet = netState.qSheets[msg.pId];
             sheet.penalties[msg.idx] = !sheet.penalties[msg.idx];
             broadcastState();
+            renderAll();
         }
         else if (msg.cmd === 'Q_END' && isSenderActive && netState.turnPhase === 'ACTION') {
             hostAdvanceTurn();
             broadcastState();
+            renderAll();
         }
     }
 
@@ -843,7 +858,7 @@
             if (!p.connected) badge.classList.add('offline');
             if (idx === netState.turnIdx && netState.state === 'PLAYING') badge.classList.add('active-turn');
             
-            let hostIcon = (idx === 0) ? '<span class="host-crown" title="Host">👑</span>' : '';
+            let hostIcon = (idx === 0) ? '<span class="host-crown" title="Host">荘</span>' : '';
             let activeIcon = (idx === netState.turnIdx && netState.state === 'PLAYING') ? '<span class="active-indicator">&lt;- ACTIVE</span>' : '';
             
             badge.innerHTML = `<div style="display:flex; align-items:center;"><span>${hostIcon}${p.name} ${p.id === localPlayerId ? '<strong>(You)</strong>' : ''}</span></div> ${activeIcon}`;
@@ -1071,7 +1086,7 @@
             let lockCrossed = mySheet[r.color][11] || netState.qLocks[r.color];
             const lockCell = document.createElement('div');
             lockCell.className = `qwixx-cell ${lockCrossed ? 'crossed' : ''} disabled`;
-            lockCell.innerHTML = '🔒';
+            lockCell.innerHTML = '白';
             rowDiv.appendChild(lockCell);
             board.appendChild(rowDiv);
         });
