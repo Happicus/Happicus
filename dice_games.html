@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice Games: Math & Probability Edition</title>
+<style>
+    :root {
+        --bg-color: #faf8f5;
+        --card-bg: #ffffff;
+        --primary-color: #2c3e50;
+        --accent-color: #3498db;
+        --success-color: #27ae60;
+        --red-row: #ffebee;
+        --yellow-row: #fffde7;
+        --green-row: #e8f5e9;
+        --blue-row: #e3f2fd;
+        --qwixx-red: #e53935;
+        --qwixx-yellow: #fdd835;
+        --qwixx-green: #43a047;
+        --qwixx-blue: #1e88e5;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--primary-color);
+        margin: 0;
+        padding: 20px;
+        line-height: 1.5;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .tab {
+        padding: 10px 20px;
+        background-color: #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        user-select: none;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .tab:hover {
+        background-color: #d0d0d0;
+    }
+
+    .tab.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .view {
+        display: none;
+        background-color: var(--card-bg);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .view.active {
+        display: block;
+    }
+
+    .dice-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        min-height: 80px;
+    }
+
+    .die-wrapper {
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+
+    .die-wrapper:active {
+        transform: scale(0.95);
+    }
+
+    .die-wrapper.held {
+        transform: translateY(10px);
+        box-shadow: 0 0 0 3px #e74c3c;
+        border-radius: 15px;
+    }
+
+    .controls {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 0 5px;
+        transition: background-color 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+        background-color: #2980b9;
+    }
+    
+    button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+    }
+
+    #y-confirm-btn {
+        background-color: var(--success-color);
+    }
+    #y-confirm-btn:hover:not(:disabled) {
+        background-color: #219a52;
+    }
+
+    .status-bar {
+        font-size: 1.2em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #e74c3c;
+    }
+
+    /* Yahtzee Styles */
+    .yahtzee-board {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .yahtzee-board {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f5f5f5;
+    }
+    
+    .cat-name {
+        cursor: help;
+        border-bottom: 1px dotted #999;
+    }
+
+    .score-cell {
+        text-align: right;
+        width: 60px;
+        cursor: pointer;
+        font-size: 18px;
+        user-select: none;
+        transition: background-color 0.1s;
+    }
+
+    .score-cell:hover:not(.locked) {
+        background-color: #f0f8ff;
+    }
+
+    .score-cell.potential {
+        color: #95a5a6;
+        font-style: italic;
+    }
+    
+    .score-cell.selected {
+        background-color: #d1ecf1;
+        border: 2px solid #0c5460;
+        font-weight: bold;
+        color: #0c5460;
+    }
+
+    .score-cell.locked {
+        font-weight: bold;
+        color: var(--primary-color);
+        background-color: #e3f2fd;
+        cursor: default;
+    }
+
+    /* Game Logs for Math Class */
+    .log-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+    }
+    
+    .log-table th {
+        background-color: #2c3e50;
+        color: white;
+        font-size: 0.9em;
+    }
+    
+    .log-table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .log-table td:nth-child(2) {
+        text-align: left; 
+    }
+
+    .dice-inline-container {
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+        flex-wrap: wrap;
+    }
+
+    /* Qwixx Styles */
+    .qwixx-board {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .qwixx-row {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        align-items: center;
+        overflow-x: auto;
+    }
+
+    .qwixx-row.red { background-color: var(--red-row); }
+    .qwixx-row.yellow { background-color: var(--yellow-row); }
+    .qwixx-row.green { background-color: var(--green-row); }
+    .qwixx-row.blue { background-color: var(--blue-row); }
+
+    .qwixx-cell {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        transition: transform 0.1s, opacity 0.2s;
+    }
+    
+    .qwixx-cell.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background-color: #f5f5f5 !important;
+        color: #999 !important;
+        border-color: #ccc !important;
+    }
+    
+    .qwixx-cell:active:not(.disabled) {
+        transform: scale(0.9);
+    }
+
+    .qwixx-row.red .qwixx-cell, .qwixx-row.yellow .qwixx-cell { color: #333; border: 2px solid #ccc; background: white;}
+    .qwixx-row.green .qwixx-cell, .qwixx-row.blue .qwixx-cell { color: #333; border: 2px solid #ccc; background: white;}
+    
+    .qwixx-row.red .qwixx-cell:not(.disabled) { border-color: var(--qwixx-red); color: var(--qwixx-red); }
+    .qwixx-row.yellow .qwixx-cell:not(.disabled) { border-color: var(--qwixx-yellow); color: #c0ca33; }
+    .qwixx-row.green .qwixx-cell:not(.disabled) { border-color: var(--qwixx-green); color: var(--qwixx-green); }
+    .qwixx-row.blue .qwixx-cell:not(.disabled) { border-color: var(--qwixx-blue); color: var(--qwixx-blue); }
+
+    .qwixx-cell.crossed::after {
+        content: "X";
+        position: absolute;
+        font-size: 36px;
+        color: #2c3e50;
+    }
+
+    .qwixx-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        align-items: center;
+    }
+
+    .penalties {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .penalty-box {
+        width: 30px;
+        height: 30px;
+        border: 2px solid #95a5a6;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .penalty-box.crossed::after {
+        content: "X";
+        font-size: 24px;
+        color: #e74c3c;
+    }
+
+    .total-score {
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    /* Print styling */
+    @media print {
+        body { background: white; padding: 0; }
+        .tabs, .controls, .dice-container { display: none; }
+        .view { box-shadow: none; padding: 0; display: block !important; margin-bottom: 40px; }
+        .qwixx-row { break-inside: avoid; }
+        .log-section { break-before: always; }
+        @page { margin: 15mm; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        .cat-name { border-bottom: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Dice Games: Probability Edition</h1>
+        <p style="margin-top: -10px; color: #666;">Data tracking enabled for statistical analysis & conditionals.</p>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('yahtzee')">Yahtzee</div>
+        <div class="tab" onclick="switchTab('qwixx')">Qwixx</div>
+        <div class="tab" onclick="switchTab('rules')">Rules</div>
+    </div>
+
+    <!-- YAHTZEE VIEW -->
+    <div id="yahtzee" class="view active">
+        <div class="status-bar" id="y-round-counter">Round: 1 / 13</div>
+        <div class="dice-container" id="y-dice"></div>
+        
+        <div class="controls">
+            <button id="y-roll-btn" onclick="rollYahtzee()">Roll (3 left)</button>
+            <button id="y-confirm-btn" onclick="confirmYahtzeeScore()" disabled title="Lock in the currently highlighted score and move to next round.">Confirm Score & Next Round</button>
+            <button onclick="resetYahtzeeGame()" style="background-color: #7f8c8d;">Reset Game</button>
+        </div>
+
+        <div class="yahtzee-board">
+            <div>
+                <table>
+                    <thead>
+                        <tr><th colspan="2" title="Score the sum of the matching dice faces. 63+ total awards a 35 point bonus.">Upper Section</th></tr>
+                    </thead>
+                    <tbody id="y-upper">
+                        <tr data-cat="ones"><td class="cat-name" title="Sum of all 1s">Ones</td><td class="score-cell" onclick="toggleYahtzeeScore('ones')"></td></tr>
+                        <tr data-cat="twos"><td class="cat-name" title="Sum of all 2s">Twos</td><td class="score-cell" onclick="toggleYahtzeeScore('twos')"></td></tr>
+                        <tr data-cat="threes"><td class="cat-name" title="Sum of all 3s">Threes</td><td class="score-cell" onclick="toggleYahtzeeScore('threes')"></td></tr>
+                        <tr data-cat="fours"><td class="cat-name" title="Sum of all 4s">Fours</td><td class="score-cell" onclick="toggleYahtzeeScore('fours')"></td></tr>
+                        <tr data-cat="fives"><td class="cat-name" title="Sum of all 5s">Fives</td><td class="score-cell" onclick="toggleYahtzeeScore('fives')"></td></tr>
+                        <tr data-cat="sixes"><td class="cat-name" title="Sum of all 6s">Sixes</td><td class="score-cell" onclick="toggleYahtzeeScore('sixes')"></td></tr>
+                        <tr><td><strong>Total Score</strong></td><td id="y-upper-total">0</td></tr>
+                        <tr><td><strong title="Requires 63 or more points in the upper section">Bonus (if >= 63)</strong></td><td id="y-upper-bonus">0</td></tr>
+                        <tr><td><strong>Upper Total</strong></td><td id="y-upper-final">0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <table>
+                    <thead>
+                        <tr><th colspan="2" title="Special combinations. If you don't have the required dice, you can score 0 (scratch).">Lower Section</th></tr>
+                    </thead>
+                    <tbody id="y-lower">
+                        <tr data-cat="threeOfKind"><td class="cat-name" title="3 dice of the same number. Scores sum of ALL 5 dice.">3 of a Kind</td><td class="score-cell" onclick="toggleYahtzeeScore('threeOfKind')"></td></tr>
+                        <tr data-cat="fourOfKind"><td class="cat-name" title="4 dice of the same number. Scores sum of ALL 5 dice.">4 of a Kind</td><td class="score-cell" onclick="toggleYahtzeeScore('fourOfKind')"></td></tr>
+                        <tr data-cat="fullHouse"><td class="cat-name" title="3 of a kind + a pair. Scores 25 points.">Full House (25)</td><td class="score-cell" onclick="toggleYahtzeeScore('fullHouse')"></td></tr>
+                        <tr data-cat="smStraight"><td class="cat-name" title="4 consecutive numbers (e.g. 1-2-3-4). Scores 30 points.">Small Straight (30)</td><td class="score-cell" onclick="toggleYahtzeeScore('smStraight')"></td></tr>
+                        <tr data-cat="lgStraight"><td class="cat-name" title="5 consecutive numbers (e.g. 1-2-3-4-5). Scores 40 points.">Large Straight (40)</td><td class="score-cell" onclick="toggleYahtzeeScore('lgStraight')"></td></tr>
+                        <tr data-cat="yahtzee"><td class="cat-name" title="5 dice of the same number. Scores 50 points.">YAHTZEE (50)</td><td class="score-cell" onclick="toggleYahtzeeScore('yahtzee')"></td></tr>
+                        <tr data-cat="chance"><td class="cat-name" title="Any combination. Scores sum of ALL 5 dice.">Chance</td><td class="score-cell" onclick="toggleYahtzeeScore('chance')"></td></tr>
+                        <tr><td><strong>Lower Total</strong></td><td id="y-lower-total">0</td></tr>
+                        <tr><td><strong>GRAND TOTAL</strong></td><td id="y-grand-total">0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Math Class: Yahtzee Game Log -->
+        <div class="log-section">
+            <h2>Yahtzee Roll History & Probabilities</h2>
+            <p style="font-size: 0.9em; color: #666;">Tracks the final selection for each round. Red-tinted dice indicate dice that were <strong>held</strong> prior to the roll. Use this data to calculate conditional probabilities.</p>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th width="8%">Round</th>
+                        <th width="20%">Category Scored</th>
+                        <th width="8%">Score</th>
+                        <th width="21%">Roll 1</th>
+                        <th width="21%">Roll 2</th>
+                        <th width="21%">Roll 3</th>
+                    </tr>
+                </thead>
+                <tbody id="y-log-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QWIXX VIEW -->
+    <div id="qwixx" class="view">
+        <div class="dice-container" id="q-dice"></div>
+        <div class="controls">
+            <button onclick="rollQwixx()">Roll Dice</button>
+            <button onclick="resetQwixx()" style="background-color: #7f8c8d;">Reset Game</button>
+        </div>
+
+        <div class="qwixx-board" id="q-board">
+            <!-- Rendered by JS -->
+        </div>
+
+        <div class="qwixx-footer">
+            <div class="penalties">
+                <strong title="Take a penalty if you cross zero numbers on your turn.">Penalties (-5 each):</strong>
+                <div class="penalty-box" onclick="togglePenalty(0)"></div>
+                <div class="penalty-box" onclick="togglePenalty(1)"></div>
+                <div class="penalty-box" onclick="togglePenalty(2)"></div>
+                <div class="penalty-box" onclick="togglePenalty(3)"></div>
+            </div>
+            <div class="total-score">
+                Total: <span id="q-total-score">0</span>
+            </div>
+        </div>
+
+        <!-- Math Class: Qwixx Game Log -->
+        <div class="log-section">
+            <h2>Qwixx Roll History & Probabilities</h2>
+            <p style="font-size: 0.9em; color: #666;">Tracks every roll made during the game to analyze standard distribution (sum of 2D6) versus independent colored die rolls.</p>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th width="10%">Turn</th>
+                        <th width="10%">White 1</th>
+                        <th width="10%">White 2</th>
+                        <th width="14%">White Sum</th>
+                        <th width="14%" style="color:var(--qwixx-red)">Red</th>
+                        <th width="14%" style="color:#c0ca33">Yellow</th>
+                        <th width="14%" style="color:var(--qwixx-green)">Green</th>
+                        <th width="14%" style="color:var(--qwixx-blue)">Blue</th>
+                    </tr>
+                </thead>
+                <tbody id="q-log-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RULES VIEW -->
+    <div id="rules" class="view">
+        <h2>Yahtzee Quick Rules</h2>
+        <ul>
+            <li><strong>Objective:</strong> Score points by rolling 5 dice to make certain combinations across exactly 13 rounds.</li>
+            <li><strong>Turn:</strong> Roll the dice up to 3 times. After each roll, you can hold any number of dice.</li>
+            <li><strong>Scoring:</strong> Choose one category on the score sheet to fill in. <em>If your dice don't match the requirements, you must "scratch" and take a 0.</em></li>
+            <li><strong>Upper Bonus:</strong> Score 63 or more points in the upper section to get a 35-point bonus.</li>
+        </ul>
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        <h2>Qwixx Quick Rules</h2>
+        <ul>
+            <li><strong>Objective:</strong> Score points by crossing out numbers from left to right.</li>
+            <li><strong>The Golden Rule:</strong> Numbers must be crossed out from left to right. Once you cross out a number, you can never cross out any numbers to its left in that same row.</li>
+            <li><strong>Turn:</strong> 1. Announce sum of white dice (anyone can cross). 2. Active player can combine 1 white + 1 colored die to cross in that color's row.</li>
+            <li><strong>Locking:</strong> To cross the far right number (2 or 12), you must already have 5 crosses in that row. This automatically locks the row.</li>
+            <li><strong>Penalties:</strong> If the active player crosses off zero numbers during their turn, they must take a penalty (-5 points).</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // --- UTILS & SVG GENERATION ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function createDieSVG(value, colorStr, bgStr, size = 60) {
+        const dots = [];
+        const c = 50; const offset = 22;
+        const l = c - offset, r = c + offset;
+        if (value === 1 || value === 3 || value === 5) dots.push([c, c]);
+        if (value > 1) { dots.push([l, l]); dots.push([r, r]); }
+        if (value > 3) { dots.push([l, r]); dots.push([r, l]); }
+        if (value === 6) { dots.push([l, c]); dots.push([r, c]); }
+
+        let dotSVG = dots.map(d => `<circle cx="${d[0]}" cy="${d[1]}" r="9" fill="${colorStr}"/>`).join('');
+        return `
+            <svg width="${size}" height="${size}" viewBox="0 0 100 100" style="display:block;">
+                <rect x="5" y="5" width="90" height="90" rx="15" fill="${bgStr}" stroke="${colorStr}" stroke-width="6"/>
+                ${dotSVG}
+            </svg>
+        `;
+    }
+
+    function getRandomDie() { return Math.floor(Math.random() * 6) + 1; }
+
+    const CAT_NAMES = {
+        ones: 'Ones', twos: 'Twos', threes: 'Threes', fours: 'Fours', fives: 'Fives', sixes: 'Sixes',
+        threeOfKind: '3 of a Kind', fourOfKind: '4 of a Kind', fullHouse: 'Full House',
+        smStraight: 'Sm. Straight', lgStraight: 'Lg. Straight', yahtzee: 'YAHTZEE', chance: 'Chance'
+    };
+
+    // --- YAHTZEE LOGIC ---
+    let yDice = [
+        { val: 1, held: false }, { val: 2, held: false }, { val: 3, held: false },
+        { val: 4, held: false }, { val: 5, held: false }
+    ];
+    let yRollsLeft = 3;
+    let yScores = {};
+    let yHistory = [];
+    let currentTurnRolls = [];
+    let yTurnStarted = false;
+    let ySelectedCategory = null;
+
+    function initYahtzeeState() {
+        Object.keys(CAT_NAMES).forEach(k => yScores[k] = null);
+        yHistory = [];
+        ySelectedCategory = null;
+        yTurnStarted = false;
+        yRollsLeft = 3;
+        currentTurnRolls = [];
+        yDice.forEach(d => d.held = false);
+        renderYahtzeeDice();
+        updateYahtzeeScores();
+        document.getElementById('y-round-counter').innerText = "Round: 1 / 13";
+    }
+
+    function renderYahtzeeDice() {
+        const container = document.getElementById('y-dice');
+        container.innerHTML = '';
+        
+        if (!yTurnStarted && yHistory.length < 13) {
+            container.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; width:100%; color:#7f8c8d; font-style:italic;">Click "Roll" to begin your turn!</div>';
+        } else {
+            yDice.forEach(die => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `die-wrapper ${die.held ? 'held' : ''}`;
+                wrapper.innerHTML = createDieSVG(die.val, '#2c3e50', 'white');
+                wrapper.title = die.held ? "Held" : "Click to hold";
+                wrapper.onclick = () => {
+                    if (yRollsLeft < 3 && yRollsLeft > 0 && yHistory.length < 13) { 
+                        die.held = !die.held;
+                        renderYahtzeeDice();
+                    }
+                };
+                container.appendChild(wrapper);
+            });
+        }
+        
+        const btn = document.getElementById('y-roll-btn');
+        if (yHistory.length >= 13) {
+            btn.innerText = "Game Over";
+            btn.disabled = true;
+        } else {
+            btn.innerText = `Roll (${yRollsLeft} left)`;
+            btn.disabled = yRollsLeft === 0;
+        }
+    }
+
+    function rollYahtzee() {
+        if (yRollsLeft === 0 || yHistory.length >= 13) return;
+        
+        yTurnStarted = true;
+        yDice.forEach(die => {
+            if (!die.held) die.val = getRandomDie();
+        });
+        yRollsLeft--;
+        
+        currentTurnRolls.push(yDice.map(d => ({val: d.val, held: d.held})));
+        
+        renderYahtzeeDice();
+        updateYahtzeeScores();
+    }
+
+    function resetYahtzeeGame() {
+        initYahtzeeState();
+        renderYahtzeeLog();
+    }
+
+    function calcYahtzeePotential(cat) {
+        const vals = yDice.map(d => d.val);
+        const counts = [0, 0, 0, 0, 0, 0, 0];
+        let sum = 0;
+        vals.forEach(v => { counts[v]++; sum += v; });
+
+        switch(cat) {
+            case 'ones': return counts[1] * 1;
+            case 'twos': return counts[2] * 2;
+            case 'threes': return counts[3] * 3;
+            case 'fours': return counts[4] * 4;
+            case 'fives': return counts[5] * 5;
+            case 'sixes': return counts[6] * 6;
+            case 'threeOfKind': return counts.some(c => c >= 3) ? sum : 0;
+            case 'fourOfKind': return counts.some(c => c >= 4) ? sum : 0;
+            case 'fullHouse': return counts.includes(3) && counts.includes(2) ? 25 : 0;
+            case 'smStraight': 
+                const u = [...new Set(vals)].sort().join('');
+                return (u.includes('1234') || u.includes('2345') || u.includes('3456')) ? 30 : 0;
+            case 'lgStraight':
+                const u2 = [...new Set(vals)].sort().join('');
+                return (u2 === '12345' || u2 === '23456') ? 40 : 0;
+            case 'yahtzee': return counts.some(c => c === 5) ? 50 : 0;
+            case 'chance': return sum;
+        }
+        return 0;
+    }
+
+    function updateYahtzeeScores() {
+        let upperSum = 0;
+        let lowerSum = 0;
+
+        Object.keys(yScores).forEach(cat => {
+            const tr = document.querySelector(`tr[data-cat="${cat}"]`);
+            const cell = tr.querySelector('.score-cell');
+            
+            if (yScores[cat] !== null) {
+                cell.innerText = yScores[cat];
+                cell.className = 'score-cell locked';
+                cell.title = "Score permanently locked.";
+                if (['ones','twos','threes','fours','fives','sixes'].includes(cat)) upperSum += yScores[cat];
+                else lowerSum += yScores[cat];
+            } else {
+                if (yTurnStarted) {
+                    let pot = calcYahtzeePotential(cat);
+                    cell.innerText = pot;
+                    if (ySelectedCategory === cat) {
+                        cell.className = 'score-cell selected';
+                    } else {
+                        cell.className = 'score-cell potential';
+                    }
+                    if (pot === 0) {
+                        cell.title = "Warning: Taking a 0 (Scratching). You don't have this combo. Click to highlight.";
+                    } else {
+                        cell.title = `Click to tentatively select ${pot} points.`;
+                    }
+                } else {
+                    cell.innerText = '';
+                    cell.className = 'score-cell';
+                    cell.title = "Roll the dice to see potential score.";
+                }
+            }
+        });
+
+        const bonus = upperSum >= 63 ? 35 : 0;
+        document.getElementById('y-upper-total').innerText = upperSum;
+        document.getElementById('y-upper-bonus').innerText = bonus;
+        document.getElementById('y-upper-final').innerText = upperSum + bonus;
+        document.getElementById('y-lower-total').innerText = lowerSum;
+        document.getElementById('y-grand-total').innerText = upperSum + bonus + lowerSum;
+    }
+
+    function toggleYahtzeeScore(cat) {
+        if (!yTurnStarted || yScores[cat] !== null) return; 
+        
+        if (ySelectedCategory === cat) {
+            ySelectedCategory = null;
+        } else {
+            ySelectedCategory = cat;
+        }
+        updateYahtzeeScores();
+        document.getElementById('y-confirm-btn').disabled = (ySelectedCategory === null);
+    }
+
+    function confirmYahtzeeScore() {
+        if (!ySelectedCategory) return;
+        let score = calcYahtzeePotential(ySelectedCategory);
+        
+        if (score === 0) {
+            if (!confirm(`Are you sure you want to scratch '${CAT_NAMES[ySelectedCategory]}' for 0 points?`)) return;
+        }
+
+        yScores[ySelectedCategory] = score;
+        yHistory.push({
+            round: yHistory.length + 1,
+            cat: ySelectedCategory,
+            score: score,
+            rolls: JSON.parse(JSON.stringify(currentTurnRolls))
+        });
+        
+        ySelectedCategory = null;
+        yTurnStarted = false;
+        yRollsLeft = 3;
+        currentTurnRolls = [];
+        yDice.forEach(d => d.held = false);
+        
+        document.getElementById('y-confirm-btn').disabled = true;
+        renderYahtzeeDice();
+        updateYahtzeeScores();
+        renderYahtzeeLog();
+        
+        const counter = document.getElementById('y-round-counter');
+        if (yHistory.length < 13) {
+            counter.innerText = `Round: ${yHistory.length + 1} / 13`;
+        } else {
+            counter.innerText = "Game Completed!";
+        }
+    }
+
+    function renderYahtzeeLog() {
+        const tbody = document.getElementById('y-log-body');
+        tbody.innerHTML = '';
+
+        yHistory.forEach(entry => {
+            const tr = document.createElement('tr');
+            
+            let rollsHtml = '';
+            for(let i=0; i<3; i++) {
+                if (entry.rolls[i]) {
+                    const svgs = entry.rolls[i].map(d => {
+                        let color = d.held ? '#c0392b' : '#2c3e50';
+                        let bg = d.held ? '#fadbd8' : 'white';
+                        return createDieSVG(d.val, color, bg, 26);
+                    }).join('');
+                    rollsHtml += `<td><div class="dice-inline-container">${svgs}</div></td>`;
+                } else {
+                    rollsHtml += `<td>-</td>`;
+                }
+            }
+
+            tr.innerHTML = `
+                <td>${entry.round}</td>
+                <td>${CAT_NAMES[entry.cat]}</td>
+                <td><strong>${entry.score}</strong></td>
+                ${rollsHtml}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+
+    // --- QWIXX LOGIC ---
+    let qDice = [
+        { c: 'white', bg: 'white', hex: '#333', val: 1 },
+        { c: 'white', bg: 'white', hex: '#333', val: 1 },
+        { c: 'red', bg: '#e53935', hex: 'white', val: 1 },
+        { c: 'yellow', bg: '#fdd835', hex: '#333', val: 1 },
+        { c: 'green', bg: '#43a047', hex: 'white', val: 1 },
+        { c: 'blue', bg: '#1e88e5', hex: 'white', val: 1 }
+    ];
+
+    let qState = {
+        red: Array(12).fill(false), yellow: Array(12).fill(false),
+        green: Array(12).fill(false), blue: Array(12).fill(false),
+        penalties: [false, false, false, false]
+    };
+    let qRollHistory = [];
+
+    function renderQwixxDice() {
+        const container = document.getElementById('q-dice');
+        container.innerHTML = '';
+        qDice.forEach(die => {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = createDieSVG(die.val, die.hex, die.bg);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function rollQwixx() {
+        qDice.forEach(die => die.val = getRandomDie());
+        qRollHistory.push(JSON.parse(JSON.stringify(qDice)));
+        renderQwixxDice();
+        renderQwixxLog();
+    }
+
+    function renderQwixxLog() {
+        const tbody = document.getElementById('q-log-body');
+        tbody.innerHTML = '';
+        
+        qRollHistory.forEach((turn, idx) => {
+            const tr = document.createElement('tr');
+            const w1 = turn[0].val;
+            const w2 = turn[1].val;
+            const wSum = w1 + w2;
+            const r = turn[2].val;
+            const y = turn[3].val;
+            const g = turn[4].val;
+            const b = turn[5].val;
+
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td><div class="dice-inline-container">${createDieSVG(w1, '#333', 'white', 26)}</div></td>
+                <td><div class="dice-inline-container">${createDieSVG(w2, '#333', 'white', 26)}</div></td>
+                <td><strong>${wSum}</strong></td>
+                <td><div class="dice-inline-container">${createDieSVG(r, 'white', '#e53935', 26)}</div></td>
+                <td><div class="dice-inline-container">${createDieSVG(y, '#333', '#fdd835', 26)}</div></td>
+                <td><div class="dice-inline-container">${createDieSVG(g, 'white', '#43a047', 26)}</div></td>
+                <td><div class="dice-inline-container">${createDieSVG(b, 'white', '#1e88e5', 26)}</div></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function buildQwixxBoard() {
+        const board = document.getElementById('q-board');
+        board.innerHTML = '';
+        
+        const rows = [
+            { color: 'red', nums: [2,3,4,5,6,7,8,9,10,11,12] },
+            { color: 'yellow', nums: [2,3,4,5,6,7,8,9,10,11,12] },
+            { color: 'green', nums: [12,11,10,9,8,7,6,5,4,3,2] },
+            { color: 'blue', nums: [12,11,10,9,8,7,6,5,4,3,2] }
+        ];
+
+        rows.forEach(r => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = `qwixx-row ${r.color}`;
+            
+            let maxCrossed = qState[r.color].lastIndexOf(true);
+            let crossCount = qState[r.color].filter(x => x).length;
+            // Discount the lock if it's currently true so we count actual numbers
+            if (qState[r.color][11]) crossCount--;
+
+            r.nums.forEach((n, idx) => {
+                let isCrossed = qState[r.color][idx];
+                let disabled = false;
+                let title = "Click to cross out.";
+                
+                // Enforce left-to-right rule
+                if (!isCrossed && idx < maxCrossed) {
+                    disabled = true;
+                    title = "Invalid: You cannot cross numbers to the left of your right-most cross.";
+                }
+                
+                // Enforce undo rule (can only undo the right-most to avoid breaking sequence)
+                if (isCrossed && idx < maxCrossed) {
+                    disabled = true;
+                    title = "Invalid: You can only undo your right-most cross.";
+                }
+                
+                // Enforce locking rule (far right number requires 5 crosses)
+                if (idx === 10 && !isCrossed && crossCount < 5) {
+                    disabled = true;
+                    title = "Locked: You need at least 5 crosses in this row to cross the final number.";
+                }
+
+                const cell = document.createElement('div');
+                cell.className = `qwixx-cell ${isCrossed ? 'crossed' : ''} ${disabled ? 'disabled' : ''}`;
+                cell.title = title;
+                cell.innerText = n;
+                
+                if (!disabled) {
+                    cell.onclick = () => toggleQwixxCell(r.color, idx);
+                }
+                rowDiv.appendChild(cell);
+            });
+
+            const lockCell = document.createElement('div');
+            // The lock isn't directly clickable; it's triggered by index 10
+            lockCell.className = `qwixx-cell ${qState[r.color][11] ? 'crossed' : ''} disabled`;
+            lockCell.title = "Locks automatically when you cross the final number.";
+            lockCell.innerHTML = '🔒';
+            rowDiv.appendChild(lockCell);
+
+            board.appendChild(rowDiv);
+        });
+        updateQwixxScore();
+    }
+
+    function toggleQwixxCell(color, index) {
+        qState[color][index] = !qState[color][index];
+        // Automatically toggle the lock symbol (index 11) if the last number (index 10) is toggled
+        if (index === 10) {
+            qState[color][11] = qState[color][10];
+        }
+        buildQwixxBoard();
+    }
+
+    function togglePenalty(index) {
+        qState.penalties[index] = !qState.penalties[index];
+        const boxes = document.querySelectorAll('.penalty-box');
+        if(qState.penalties[index]) {
+            boxes[index].classList.add('crossed');
+        } else {
+            boxes[index].classList.remove('crossed');
+        }
+        updateQwixxScore();
+    }
+
+    function updateQwixxScore() {
+        const scoreMap = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78];
+        let total = 0;
+
+        ['red', 'yellow', 'green', 'blue'].forEach(color => {
+            let crosses = qState[color].filter(x => x).length;
+            if (crosses > 12) crosses = 12;
+            total += scoreMap[crosses];
+        });
+
+        const penaltyCount = qState.penalties.filter(x => x).length;
+        total -= (penaltyCount * 5);
+        document.getElementById('q-total-score').innerText = total;
+    }
+
+    function resetQwixx() {
+        ['red', 'yellow', 'green', 'blue'].forEach(color => {
+            qState[color] = Array(12).fill(false);
+        });
+        qState.penalties = [false, false, false, false];
+        qRollHistory = [];
+        document.querySelectorAll('.penalty-box').forEach(b => b.classList.remove('crossed'));
+        rollQwixx();
+        buildQwixxBoard();
+        renderQwixxLog();
+    }
+
+    // Init
+    initYahtzeeState();
+    resetQwixx();
+
+</script>
+</body>
+</html>
